@@ -1,0 +1,308 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<AMPCADE version="0.1.0" pedalOrder="cmp b1 b2 b3 p1 p2 p3 p4 drv cho amp cab eq dly air rev"
+         hiddenSlots="cho tun drv dly eq p1 p2 b1 b2 b3 cmp p3" looperBpm="85"
+         looperBeats="4" looperPlayAfterRec="0" looperCountIn="1" looperRingOut="0">
+  <STATE>
+    <PARAM id="amp_bass" value="1.899999976158142"/>
+    <PARAM id="amp_gain" value="3.576278686523438e-7"/>
+    <PARAM id="amp_mid" value="5.0"/>
+    <PARAM id="amp_on" value="1.0"/>
+    <PARAM id="amp_treble" value="5.0"/>
+    <PARAM id="amp_vol" value="12.20000076293945"/>
+    <PARAM id="cab_on" value="1.0"/>
+    <PARAM id="gate" value="-101.0"/>
+    <PARAM id="in_gain" value="3.576278686523438e-7"/>
+    <PARAM id="out_gain" value="5.500000476837158"/>
+    <PARAM id="p1_drive" value="3.576278686523438e-7"/>
+    <PARAM id="p1_level" value="3.576278686523438e-7"/>
+    <PARAM id="p1_on" value="0.0"/>
+    <PARAM id="p2_drive" value="3.576278686523438e-7"/>
+    <PARAM id="p2_level" value="3.576278686523438e-7"/>
+    <PARAM id="p2_on" value="0.0"/>
+    <PARAM id="p3_drive" value="3.576278686523438e-7"/>
+    <PARAM id="p3_level" value="3.576278686523438e-7"/>
+    <PARAM id="p3_on" value="0.0"/>
+    <PARAM id="p4_drive" value="3.576278686523438e-7"/>
+    <PARAM id="p4_level" value="3.576278686523438e-7"/>
+    <PARAM id="p4_on" value="1.0"/>
+    <PARAM id="dly_fb"/>
+    <PARAM id="dly_mix" value="0.25"/>
+    <PARAM id="dly_on" value="0.0"/>
+    <PARAM id="dly_time"/>
+    <PARAM id="rev_mix" value="0.3700000047683716"/>
+    <PARAM id="rev_on" value="1.0"/>
+    <PARAM id="rev_size" value="5.0"/>
+    <PARAM id="p1_tone" value="5.0"/>
+    <PARAM id="p2_tone" value="5.0"/>
+    <PARAM id="p3_tone" value="5.0"/>
+    <PARAM id="p4_tone" value="5.0"/>
+    <PARAM id="cab_mix" value="1.0"/>
+    <PARAM id="drv_gain" value="5.0"/>
+    <PARAM id="drv_level" value="3.576278686523438e-7"/>
+    <PARAM id="drv_on" value="0.0"/>
+    <PARAM id="drv_tone"/>
+    <PARAM id="air_mix" value="0.2999999821186066"/>
+    <PARAM id="air_on" value="1.0"/>
+    <PARAM id="cho_depth" value="5.0"/>
+    <PARAM id="cho_mix" value="0.5"/>
+    <PARAM id="cho_on" value="0.0"/>
+    <PARAM id="cho_rate" value="1.200000047683716"/>
+    <PARAM id="tun_mute"/>
+    <PARAM id="tun_on" value="0.0"/>
+    <PARAM id="air_bass" value="5.0"/>
+    <PARAM id="air_level" value="3.576278686523438e-7"/>
+    <PARAM id="air_treble"/>
+    <PARAM id="b1_gain"/>
+    <PARAM id="b1_on" value="0.0"/>
+    <PARAM id="b2_gain"/>
+    <PARAM id="b2_on" value="0.0"/>
+    <PARAM id="b3_gain"/>
+    <PARAM id="b3_on" value="0.0"/>
+    <PARAM id="cmp_att"/>
+    <PARAM id="cmp_comp"/>
+    <PARAM id="cmp_level"/>
+    <PARAM id="cmp_on" value="0.0"/>
+    <PARAM id="dly_bpm"/>
+    <PARAM id="dly_sync"/>
+    <PARAM id="eq_bass" value="5.0"/>
+    <PARAM id="eq_mid" value="5.0"/>
+    <PARAM id="eq_on" value="0.0"/>
+    <PARAM id="eq_treble" value="5.0"/>
+    <PARAM id="loop_vol" value="-5.299999713897705"/>
+  </STATE>
+  <SLOTS>
+    <SLOT id="air" loaded="0" title="" author="" gear="" modelName="" filePath=""
+          toneId="0" modelId="0"/>
+    <SLOT id="amp" loaded="1" title="Fender" author="maixueguonian" gear="amp"
+          modelName="62DLUX amp" filePath=""
+          toneId="35719" modelId="170532"/>
+    <SLOT id="cab" loaded="1" title="Fender Deluxe Reverb Mix Ready" author="vulturized"
+          gear="cab" modelName="DELUXE REVERB OXFORD - BIG - 48 24" filePath=""
+          toneId="27465" modelId="220918"/>
+    <SLOT id="p1" loaded="1" title="Ibanez TS808 (Japan Reissue 2003)"
+          author="v24x" gear="pedal" modelName="39-TS808_Hot_LvlMax_OD5_T4"
+          filePath=""
+          toneId="30104" modelId="137699"/>
+    <SLOT id="p2" loaded="1" title="T Rex Mudhoney" author="ethanmh" gear="pedal"
+          modelName="T.Rex Mudhoney Boost G9 T3" filePath=""
+          toneId="66479" modelId="412698"/>
+    <SLOT id="p3" loaded="1" title="Boost Pedal Library" author="cosmiccrucible"
+          gear="pedal" modelName="Bluesbreaker" filePath=""
+          toneId="1825" modelId="79998"/>
+    <SLOT id="p4" loaded="0" title="" author="" gear="" modelName="" filePath=""
+          toneId="0" modelId="0"/>
+  </SLOTS>
+  <SCENES active="0">
+    <SCENE idx="0" name="Clean" used="1" hasBoard="1" order="cmp b1 b2 b3 p1 p2 p3 p4 drv cho amp cab eq dly air rev"
+           hidden="cho tun drv dly eq p1 p2 b1 b2 b3 cmp p3">
+      <VALUES air_bass="5.0" air_level="3.576278686523438e-7" air_mix="0.2999999821186066"
+              air_on="1.0" air_treble="5.0" amp_bass="1.899999976158142" amp_gain="3.576278686523438e-7"
+              amp_mid="5.0" amp_on="1.0" amp_treble="5.0" amp_vol="12.20000076293945"
+              b1_gain="6.0" b1_on="0.0" b2_gain="6.0" b2_on="0.0" b3_gain="6.0"
+              b3_on="0.0" cab_mix="1.0" cab_on="1.0" cho_depth="5.0" cho_mix="0.5"
+              cho_on="0.0" cho_rate="1.200000047683716" cmp_att="3.0" cmp_comp="5.0"
+              cmp_level="1.788139343261719e-7" cmp_on="0.0" dly_bpm="120.0"
+              dly_fb="0.3499999940395355" dly_mix="0.25" dly_on="0.0" dly_sync="0.0"
+              dly_time="380.0" drv_gain="5.0" drv_level="3.576278686523438e-7"
+              drv_on="0.0" drv_tone="5.0" eq_bass="5.0" eq_mid="5.0" eq_on="0.0"
+              eq_treble="5.0" gate="-101.0" in_gain="3.576278686523438e-7"
+              out_gain="5.500000476837158" p1_drive="3.576278686523438e-7"
+              p1_level="3.576278686523438e-7" p1_on="0.0" p1_tone="5.0" p2_drive="3.576278686523438e-7"
+              p2_level="3.576278686523438e-7" p2_on="0.0" p2_tone="5.0" p3_drive="3.576278686523438e-7"
+              p3_level="3.576278686523438e-7" p3_on="0.0" p3_tone="5.0" p4_drive="3.576278686523438e-7"
+              p4_level="3.576278686523438e-7" p4_on="1.0" p4_tone="5.0" rev_mix="0.3700000047683716"
+              rev_on="1.0" rev_size="5.0" tun_mute="1.0" tun_on="0.0"/>
+      <SLOTS>
+        <SLOT id="air" loaded="0" title="" author="" gear="" modelName="" filePath=""
+              toneId="0" modelId="0"/>
+        <SLOT id="amp" loaded="1" title="Fender" author="maixueguonian" gear="amp"
+              modelName="62DLUX amp" filePath=""
+              toneId="35719" modelId="170532"/>
+        <SLOT id="cab" loaded="1" title="Fender Deluxe Reverb Mix Ready" author="vulturized"
+              gear="cab" modelName="DELUXE REVERB OXFORD - BIG - 48 24" filePath=""
+              toneId="27465" modelId="220918"/>
+        <SLOT id="p1" loaded="1" title="Ibanez TS808 (Japan Reissue 2003)"
+              author="v24x" gear="pedal" modelName="39-TS808_Hot_LvlMax_OD5_T4"
+              filePath=""
+              toneId="30104" modelId="137699"/>
+        <SLOT id="p2" loaded="1" title="T Rex Mudhoney" author="ethanmh" gear="pedal"
+              modelName="T.Rex Mudhoney Boost G9 T3" filePath=""
+              toneId="66479" modelId="412698"/>
+        <SLOT id="p3" loaded="1" title="Boost Pedal Library" author="cosmiccrucible"
+              gear="pedal" modelName="Bluesbreaker" filePath=""
+              toneId="1825" modelId="79998"/>
+        <SLOT id="p4" loaded="0" title="" author="" gear="" modelName="" filePath=""
+              toneId="0" modelId="0"/>
+      </SLOTS>
+    </SCENE>
+    <SCENE idx="1" name="Rhythm" used="1" hasBoard="1" order="cmp b1 b2 b3 p1 p2 p3 p4 drv cho amp cab eq dly air rev"
+           hidden="cho tun drv dly p2 eq b1 b2 b3 cmp p3">
+      <VALUES air_bass="5.0" air_level="3.576278686523438e-7" air_mix="0.2999999821186066"
+              air_on="1.0" air_treble="5.0" amp_bass="1.899999976158142" amp_gain="3.576278686523438e-7"
+              amp_mid="5.0" amp_on="1.0" amp_treble="5.0" amp_vol="12.20000076293945"
+              b1_gain="6.0" b1_on="0.0" b2_gain="6.0" b2_on="0.0" b3_gain="6.0"
+              b3_on="0.0" cab_mix="1.0" cab_on="1.0" cho_depth="5.0" cho_mix="0.5"
+              cho_on="0.0" cho_rate="1.200000047683716" cmp_att="3.0" cmp_comp="5.0"
+              cmp_level="1.788139343261719e-7" cmp_on="0.0" dly_bpm="120.0"
+              dly_fb="0.3499999940395355" dly_mix="0.25" dly_on="0.0" dly_sync="0.0"
+              dly_time="380.0" drv_gain="5.0" drv_level="3.576278686523438e-7"
+              drv_on="0.0" drv_tone="5.0" eq_bass="5.0" eq_mid="5.0" eq_on="0.0"
+              eq_treble="5.0" gate="-101.0" in_gain="3.576278686523438e-7"
+              out_gain="-3.799999713897705" p1_drive="8.90000057220459" p1_level="4.100000381469727"
+              p1_on="1.0" p1_tone="5.0" p2_drive="3.576278686523438e-7" p2_level="3.576278686523438e-7"
+              p2_on="0.0" p2_tone="5.0" p3_drive="3.576278686523438e-7" p3_level="3.576278686523438e-7"
+              p3_on="0.0" p3_tone="5.0" p4_drive="3.576278686523438e-7" p4_level="3.576278686523438e-7"
+              p4_on="1.0" p4_tone="5.0" rev_mix="0.3700000047683716" rev_on="1.0"
+              rev_size="5.0" tun_mute="1.0" tun_on="0.0"/>
+      <SLOTS>
+        <SLOT id="air" loaded="0" title="" author="" gear="" modelName="" filePath=""
+              toneId="0" modelId="0"/>
+        <SLOT id="amp" loaded="1" title="Fender" author="maixueguonian" gear="amp"
+              modelName="62DLUX amp" filePath=""
+              toneId="35719" modelId="170532"/>
+        <SLOT id="cab" loaded="1" title="Fender Deluxe Reverb Mix Ready" author="vulturized"
+              gear="cab" modelName="DELUXE REVERB OXFORD - BIG - 48 24" filePath=""
+              toneId="27465" modelId="220918"/>
+        <SLOT id="p1" loaded="1" title="JHS Bonsai Pack (9 Tube Screamers)"
+              author="ampspedalspickups" gear="pedal" modelName="Boost-TS10"
+              filePath=""
+              toneId="5925" modelId="56783"/>
+        <SLOT id="p2" loaded="1" title="T Rex Mudhoney" author="ethanmh" gear="pedal"
+              modelName="T.Rex Mudhoney Boost G9 T3" filePath=""
+              toneId="66479" modelId="412698"/>
+        <SLOT id="p3" loaded="1" title="Boost Pedal Library" author="cosmiccrucible"
+              gear="pedal" modelName="Bluesbreaker" filePath=""
+              toneId="1825" modelId="79998"/>
+        <SLOT id="p4" loaded="0" title="" author="" gear="" modelName="" filePath=""
+              toneId="0" modelId="0"/>
+      </SLOTS>
+    </SCENE>
+    <SCENE idx="2" name="Solo" used="1" hasBoard="1" order="cmp b1 b2 b3 p1 p2 p3 p4 drv cho amp cab eq dly air rev"
+           hidden="cho tun drv dly eq b1 b2 b3 cmp p3">
+      <VALUES air_bass="5.0" air_level="3.576278686523438e-7" air_mix="0.2999999821186066"
+              air_on="1.0" air_treble="5.0" amp_bass="1.899999976158142" amp_gain="3.576278686523438e-7"
+              amp_mid="5.0" amp_on="1.0" amp_treble="5.0" amp_vol="10.80000019073486"
+              b1_gain="6.0" b1_on="0.0" b2_gain="6.0" b2_on="0.0" b3_gain="6.0"
+              b3_on="0.0" cab_mix="1.0" cab_on="1.0" cho_depth="5.0" cho_mix="0.5"
+              cho_on="0.0" cho_rate="1.200000047683716" cmp_att="3.0" cmp_comp="5.0"
+              cmp_level="1.788139343261719e-7" cmp_on="0.0" dly_bpm="120.0"
+              dly_fb="0.3499999940395355" dly_mix="0.25" dly_on="0.0" dly_sync="0.0"
+              dly_time="380.0" drv_gain="5.0" drv_level="3.576278686523438e-7"
+              drv_on="0.0" drv_tone="5.0" eq_bass="5.0" eq_mid="5.0" eq_on="0.0"
+              eq_treble="5.0" gate="-81.5" in_gain="3.576278686523438e-7" out_gain="-3.899999618530273"
+              p1_drive="3.576278686523438e-7" p1_level="3.576278686523438e-7"
+              p1_on="1.0" p1_tone="5.0" p2_drive="2.300000429153442" p2_level="3.576278686523438e-7"
+              p2_on="1.0" p2_tone="5.0" p3_drive="3.576278686523438e-7" p3_level="3.576278686523438e-7"
+              p3_on="0.0" p3_tone="5.0" p4_drive="3.576278686523438e-7" p4_level="3.576278686523438e-7"
+              p4_on="1.0" p4_tone="5.0" rev_mix="0.3700000047683716" rev_on="1.0"
+              rev_size="5.0" tun_mute="1.0" tun_on="0.0"/>
+      <SLOTS>
+        <SLOT id="air" loaded="0" title="" author="" gear="" modelName="" filePath=""
+              toneId="0" modelId="0"/>
+        <SLOT id="amp" loaded="1" title="Fender" author="maixueguonian" gear="amp"
+              modelName="62DLUX amp" filePath=""
+              toneId="35719" modelId="170532"/>
+        <SLOT id="cab" loaded="1" title="Fender Deluxe Reverb Mix Ready" author="vulturized"
+              gear="cab" modelName="DELUXE REVERB OXFORD - BIG - 48 24" filePath=""
+              toneId="27465" modelId="220918"/>
+        <SLOT id="p1" loaded="1" title="Ibanez TS808 (Japan Reissue 2003)"
+              author="v24x" gear="pedal" modelName="39-TS808_Hot_LvlMax_OD5_T4"
+              filePath=""
+              toneId="30104" modelId="137699"/>
+        <SLOT id="p2" loaded="1" title="T Rex Mudhoney" author="ethanmh" gear="pedal"
+              modelName="T.Rex Mudhoney Boost G9 T3" filePath=""
+              toneId="66479" modelId="412698"/>
+        <SLOT id="p3" loaded="1" title="Boost Pedal Library" author="cosmiccrucible"
+              gear="pedal" modelName="Bluesbreaker" filePath=""
+              toneId="1825" modelId="79998"/>
+        <SLOT id="p4" loaded="0" title="" author="" gear="" modelName="" filePath=""
+              toneId="0" modelId="0"/>
+      </SLOTS>
+    </SCENE>
+    <SCENE idx="3" name="Ambient" used="1" hasBoard="1" order="cmp b1 b2 b3 p1 p2 p3 p4 drv amp cab cho eq dly air rev"
+           hidden="tun drv dly p1 p2 eq b1 b2 b3 cmp p3">
+      <VALUES air_bass="5.0" air_level="3.576278686523438e-7" air_mix="0.2999999821186066"
+              air_on="1.0" air_treble="5.0" amp_bass="1.899999976158142" amp_gain="3.576278686523438e-7"
+              amp_mid="5.0" amp_on="1.0" amp_treble="5.0" amp_vol="12.20000076293945"
+              b1_gain="6.0" b1_on="0.0" b2_gain="6.0" b2_on="0.0" b3_gain="6.0"
+              b3_on="0.0" cab_mix="1.0" cab_on="1.0" cho_depth="5.0" cho_mix="1.0"
+              cho_on="1.0" cho_rate="1.200000047683716" cmp_att="3.0" cmp_comp="5.0"
+              cmp_level="1.788139343261719e-7" cmp_on="0.0" dly_bpm="120.0"
+              dly_fb="0.3499999940395355" dly_mix="0.25" dly_on="0.0" dly_sync="0.0"
+              dly_time="380.0" drv_gain="5.0" drv_level="3.576278686523438e-7"
+              drv_on="0.0" drv_tone="5.0" eq_bass="5.0" eq_mid="5.0" eq_on="0.0"
+              eq_treble="5.0" gate="-101.0" in_gain="3.576278686523438e-7"
+              out_gain="5.500000476837158" p1_drive="3.576278686523438e-7"
+              p1_level="3.576278686523438e-7" p1_on="0.0" p1_tone="5.0" p2_drive="3.576278686523438e-7"
+              p2_level="3.576278686523438e-7" p2_on="0.0" p2_tone="5.0" p3_drive="3.576278686523438e-7"
+              p3_level="3.576278686523438e-7" p3_on="0.0" p3_tone="5.0" p4_drive="3.576278686523438e-7"
+              p4_level="3.576278686523438e-7" p4_on="1.0" p4_tone="5.0" rev_mix="0.3700000047683716"
+              rev_on="1.0" rev_size="5.0" tun_mute="1.0" tun_on="0.0"/>
+      <SLOTS>
+        <SLOT id="air" loaded="0" title="" author="" gear="" modelName="" filePath=""
+              toneId="0" modelId="0"/>
+        <SLOT id="amp" loaded="1" title="Fender" author="maixueguonian" gear="amp"
+              modelName="62DLUX amp" filePath=""
+              toneId="35719" modelId="170532"/>
+        <SLOT id="cab" loaded="1" title="Fender Deluxe Reverb Mix Ready" author="vulturized"
+              gear="cab" modelName="DELUXE REVERB OXFORD - BIG - 48 24" filePath=""
+              toneId="27465" modelId="220918"/>
+        <SLOT id="p1" loaded="1" title="Ibanez TS808 (Japan Reissue 2003)"
+              author="v24x" gear="pedal" modelName="39-TS808_Hot_LvlMax_OD5_T4"
+              filePath=""
+              toneId="30104" modelId="137699"/>
+        <SLOT id="p2" loaded="1" title="T Rex Mudhoney" author="ethanmh" gear="pedal"
+              modelName="T.Rex Mudhoney Boost G9 T3" filePath=""
+              toneId="66479" modelId="412698"/>
+        <SLOT id="p3" loaded="1" title="Boost Pedal Library" author="cosmiccrucible"
+              gear="pedal" modelName="Bluesbreaker" filePath=""
+              toneId="1825" modelId="79998"/>
+        <SLOT id="p4" loaded="0" title="" author="" gear="" modelName="" filePath=""
+              toneId="0" modelId="0"/>
+      </SLOTS>
+    </SCENE>
+    <SCENE idx="4" name="Out There" used="1" hasBoard="1" order="p1 p2 p3 p4 drv cho amp cab eq"
+           hidden="tun drv p2">
+      <VALUES air_bass="1.700000047683716" air_level="-2.099999666213989" air_mix="0.5"
+              air_on="0.0" air_treble="5.0" amp_bass="1.899999976158142" amp_gain="3.576278686523438e-7"
+              amp_mid="5.0" amp_on="1.0" amp_treble="5.0" amp_vol="12.20000076293945"
+              cab_mix="1.0" cab_on="1.0" cho_depth="10.0" cho_mix="1.0" cho_on="1.0"
+              cho_rate="1.200000047683716" dly_bpm="120.0" dly_fb="0.3499999940395355"
+              dly_mix="0.25" dly_on="1.0" dly_sync="0.0" dly_time="380.0" drv_gain="5.0"
+              drv_level="3.576278686523438e-7" drv_on="0.0" drv_tone="5.0"
+              eq_bass="2.5" eq_mid="5.700000286102295" eq_on="1.0" eq_treble="7.300000190734863"
+              gate="-101.0" in_gain="3.576278686523438e-7" out_gain="5.500000476837158"
+              p1_drive="8.500000953674316" p1_level="-7.199999809265137" p1_on="1.0"
+              p1_tone="5.0" p2_drive="3.576278686523438e-7" p2_level="3.576278686523438e-7"
+              p2_on="0.0" p2_tone="5.0" p3_drive="3.576278686523438e-7" p3_level="8.90000057220459"
+              p3_on="1.0" p3_tone="5.0" p4_drive="3.576278686523438e-7" p4_level="3.576278686523438e-7"
+              p4_on="1.0" p4_tone="5.0" rev_mix="0.3700000047683716" rev_on="1.0"
+              rev_size="5.0" tun_mute="1.0" tun_on="0.0"/>
+      <SLOTS>
+        <SLOT id="air" loaded="1" title="&quot;Black Lagoon&quot; 1920s Concrete Water Reservoir"
+              author="tone3000" gear="space" modelName="1920s Concrete Water Reservoir in the woods - DeConv"
+              filePath=""
+              toneId="74633" modelId="653271"/>
+        <SLOT id="amp" loaded="1" title="Fender" author="maixueguonian" gear="amp"
+              modelName="62DLUX amp" filePath=""
+              toneId="35719" modelId="170532"/>
+        <SLOT id="cab" loaded="1" title="Fender Deluxe Reverb Mix Ready" author="vulturized"
+              gear="cab" modelName="DELUXE REVERB OXFORD - BIG - 48 24" filePath=""
+              toneId="27465" modelId="220918"/>
+        <SLOT id="p1" loaded="1" title="Ibanez TS808 (Japan Reissue 2003)"
+              author="v24x" gear="pedal" modelName="39-TS808_Hot_LvlMax_OD5_T4"
+              filePath=""
+              toneId="30104" modelId="137699"/>
+        <SLOT id="p2" loaded="1" title="T Rex Mudhoney" author="ethanmh" gear="pedal"
+              modelName="T.Rex Mudhoney Boost G9 T3" filePath=""
+              toneId="66479" modelId="412698"/>
+        <SLOT id="p3" loaded="1" title="Boost Pedal Library" author="cosmiccrucible"
+              gear="pedal" modelName="Bluesbreaker" filePath=""
+              toneId="1825" modelId="79998"/>
+        <SLOT id="p4" loaded="0" title="" author="" gear="" modelName="" filePath=""
+              toneId="0" modelId="0"/>
+      </SLOTS>
+    </SCENE>
+  </SCENES>
+</AMPCADE>

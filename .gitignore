@@ -1,0 +1,7 @@
+build*/
+dist/
+third_party/
+.DS_Store
+*.log
+.vscode/
+.idea/

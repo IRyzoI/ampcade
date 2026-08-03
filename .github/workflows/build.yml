@@ -1,0 +1,204 @@
+name: build
+
+on:
+  push:
+    branches: [main]
+    tags: ['v*']
+  workflow_dispatch:
+
+jobs:
+  macos:
+    runs-on: macos-14
+    env:
+      MACOS_CERT_P12: ${{ secrets.MACOS_CERT_P12 }}
+      MACOS_CERT_PWD: ${{ secrets.MACOS_CERT_PWD }}
+      MACOS_INSTALLER_P12: ${{ secrets.MACOS_INSTALLER_P12 }}
+      MACOS_INSTALLER_PWD: ${{ secrets.MACOS_INSTALLER_PWD }}
+      APPLE_ID: ${{ secrets.APPLE_ID }}
+      APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+      APPLE_APP_PWD: ${{ secrets.APPLE_APP_PWD }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Fetch pinned dependencies
+        run: ./scripts/setup.sh
+      - name: Configure (universal binary)
+        run: cmake -B build -DCMAKE_BUILD_TYPE=Release "-DCMAKE_OSX_ARCHITECTURES=arm64;x86_64" -DAMPCADE_COPY_PLUGIN=OFF
+      - name: Build
+        run: cmake --build build --target AmpCade_Standalone AmpCade_VST3 AmpCade_AU --parallel 3
+      - name: Package
+        run: |
+          mkdir -p dist/AmpCade
+          cp -R "build/AmpCade_artefacts/Release/Standalone/AmpCade.app" dist/AmpCade/
+          cp -R "build/AmpCade_artefacts/Release/VST3/AmpCade.vst3" dist/AmpCade/
+          cp -R "build/AmpCade_artefacts/Release/AU/AmpCade.component" dist/AmpCade/
+          cp scripts/dist-README.txt "dist/AmpCade/READ ME FIRST.txt"
+      # With no signing secrets configured this falls back to the ad-hoc
+      # signature (right-click-Open builds, as before). With the Developer ID
+      # secrets in place it produces fully signed bundles instead.
+      - name: Sign (Developer ID or ad-hoc fallback)
+        run: |
+          BUNDLES="dist/AmpCade/AmpCade.app dist/AmpCade/AmpCade.vst3 dist/AmpCade/AmpCade.component"
+          if [ -z "$MACOS_CERT_P12" ]; then
+            echo "No signing secrets — ad-hoc signing."
+            for b in $BUNDLES; do codesign --force --deep -s - "$b" 2>/dev/null || true; done
+            exit 0
+          fi
+          KEYCHAIN=$RUNNER_TEMP/sign.keychain-db
+          security create-keychain -p ci "$KEYCHAIN"
+          security set-keychain-settings -lut 1800 "$KEYCHAIN"
+          security unlock-keychain -p ci "$KEYCHAIN"
+          echo "$MACOS_CERT_P12" | base64 --decode > "$RUNNER_TEMP/cert.p12"
+          security import "$RUNNER_TEMP/cert.p12" -k "$KEYCHAIN" -P "$MACOS_CERT_PWD" -T /usr/bin/codesign
+          if [ -n "$MACOS_INSTALLER_P12" ]; then
+            echo "$MACOS_INSTALLER_P12" | base64 --decode > "$RUNNER_TEMP/installer.p12"
+            security import "$RUNNER_TEMP/installer.p12" -k "$KEYCHAIN" -P "$MACOS_INSTALLER_PWD" -T /usr/bin/productsign -T /usr/bin/productbuild
+          fi
+          security set-key-partition-list -S apple-tool:,apple: -s -k ci "$KEYCHAIN"
+          security list-keychains -d user -s "$KEYCHAIN" login.keychain
+          IDENTITY=$(security find-identity -v -p codesigning "$KEYCHAIN" | awk -F'"' '/Developer ID Application/{print $2; exit}')
+          if [ -z "$IDENTITY" ]; then
+            echo "::error::No 'Developer ID Application' signing identity found in the imported p12."
+            echo "--- identities in the keychain (valid or not):"
+            security find-identity -p codesigning "$KEYCHAIN" || true
+            echo "--- certificates in the keychain:"
+            security find-certificate -a "$KEYCHAIN" | grep '"labl"' || true
+            echo "If the list above shows 'Apple Development', the wrong certificate type was exported."
+            echo "If it shows the right name but '0 identities found', the p12 is missing its PRIVATE KEY:"
+            echo "export from Keychain Access -> My Certificates (the row must expand to show a key)."
+            exit 1
+          fi
+          echo "Signing as: $IDENTITY"
+          for b in $BUNDLES; do
+            codesign --force --options runtime --timestamp \
+                     --entitlements scripts/entitlements.plist -s "$IDENTITY" "$b"
+            codesign --verify --strict "$b"
+          done
+      - name: Notarize + staple
+        if: env.MACOS_CERT_P12 != ''
+        run: |
+          ditto -c -k --keepParent dist/AmpCade "$RUNNER_TEMP/notarize.zip"
+          xcrun notarytool submit "$RUNNER_TEMP/notarize.zip" \
+                --apple-id "$APPLE_ID" --team-id "$APPLE_TEAM_ID" \
+                --password "$APPLE_APP_PWD" --wait
+          for b in dist/AmpCade/AmpCade.app dist/AmpCade/AmpCade.vst3 dist/AmpCade/AmpCade.component; do
+            xcrun stapler staple "$b"
+          done
+      # The one-double-click installer: app to /Applications, plugins to the
+      # system plug-in folders. Signed with the Developer ID INSTALLER cert
+      # (its own secret — a different certificate type than Application) and
+      # notarized itself, so Gatekeeper waves it straight through.
+      - name: Build installer pkg
+        if: env.MACOS_INSTALLER_P12 != ''
+        run: |
+          VER=$(sed -n 's/.*kAppVersion = "\(.*\)".*/\1/p' src/Version.h)
+          mkdir -p pkgroot/Applications "pkgroot/Library/Audio/Plug-Ins/VST3" "pkgroot/Library/Audio/Plug-Ins/Components"
+          cp -R dist/AmpCade/AmpCade.app pkgroot/Applications/
+          cp -R dist/AmpCade/AmpCade.vst3 "pkgroot/Library/Audio/Plug-Ins/VST3/"
+          cp -R dist/AmpCade/AmpCade.component "pkgroot/Library/Audio/Plug-Ins/Components/"
+          pkgbuild --analyze --root pkgroot components.plist
+          for i in 0 1 2; do
+            plutil -replace "$i.BundleIsRelocatable" -bool NO components.plist 2>/dev/null || true
+          done
+          pkgbuild --root pkgroot --identifier com.ampcade.ampcade.installer \
+                   --version "$VER" --install-location / \
+                   --component-plist components.plist "$RUNNER_TEMP/AmpCade.pkg"
+          productbuild --synthesize --package "$RUNNER_TEMP/AmpCade.pkg" "$RUNNER_TEMP/dist.xml"
+          sed -i '' 's#<installer-gui-script[^>]*>#&<title>AmpCade</title>#' "$RUNNER_TEMP/dist.xml"
+          KEYCHAIN=$RUNNER_TEMP/sign.keychain-db
+          INST_ID=$(security find-identity -v "$KEYCHAIN" | awk -F'"' '/Developer ID Installer/{print $2; exit}')
+          if [ -z "$INST_ID" ]; then
+            echo "::error::No 'Developer ID Installer' identity in MACOS_INSTALLER_P12 (that exact certificate type is required for pkg signing)."
+            security find-identity "$KEYCHAIN" || true
+            exit 1
+          fi
+          echo "Signing pkg as: $INST_ID"
+          # The pkg ships INSIDE the macOS zip (one download link), next to
+          # the raw bundles for anyone who prefers a manual install.
+          productbuild --distribution "$RUNNER_TEMP/dist.xml" \
+                       --package-path "$RUNNER_TEMP" \
+                       --sign "$INST_ID" --keychain "$KEYCHAIN" \
+                       dist/AmpCade/AmpCade-Installer.pkg
+          xcrun notarytool submit dist/AmpCade/AmpCade-Installer.pkg \
+                --apple-id "$APPLE_ID" --team-id "$APPLE_TEAM_ID" \
+                --password "$APPLE_APP_PWD" --wait
+          xcrun stapler staple dist/AmpCade/AmpCade-Installer.pkg
+      - name: Zip
+        run: ditto -c -k --keepParent dist/AmpCade AmpCade-macOS.zip
+      - uses: actions/upload-artifact@v4
+        with:
+          name: AmpCade-macOS
+          path: AmpCade-macOS.zip
+
+  windows:
+    runs-on: windows-2022
+    steps:
+      - uses: actions/checkout@v4
+      - name: Fetch pinned dependencies
+        shell: bash
+        run: ./scripts/setup.sh
+      - name: Fetch WebView2 SDK
+        run: nuget install Microsoft.Web.WebView2 -Version 1.0.3485.44 -OutputDirectory webview2
+      - name: Configure
+        run: cmake -B build -DCMAKE_BUILD_TYPE=Release -DAMPCADE_COPY_PLUGIN=OFF "-DJUCE_WEBVIEW2_PACKAGE_LOCATION=${{ github.workspace }}/webview2"
+      - name: Build
+        run: cmake --build build --config Release --target AmpCade_Standalone AmpCade_VST3 --parallel 3
+      # The macOS builds are guarded POST_BUILD by scripts/check-nam-linked.sh,
+      # but that script needs `nm` and is deliberately lenient when it is absent
+      # — which is exactly the case here, so the Windows build was shipping
+      # unguarded against the bug that broke v0.1-v0.2.1 (the linker dropping
+      # the architectures' self-registering translation units, leaving a build
+      # where EVERY capture fails to load). Symbol mangling differs under MSVC,
+      # so this greps for the architecture names themselves: they are the
+      # registry keys, stored as data. A coarse check — absence is a real
+      # failure, presence is strong evidence rather than proof.
+      - name: Verify NAM architectures are linked in
+        shell: bash
+        run: |
+          set -u
+          fail=0
+          mapfile -t bins < <(find build/AmpCade_artefacts -name 'AmpCade.exe' -o -path '*x86_64-win*' -name 'AmpCade.vst3' -type f)
+          if [ ${#bins[@]} -eq 0 ]; then
+            echo "::error::no built binaries found to check"
+            exit 1
+          fi
+          for bin in "${bins[@]}"; do
+            for arch in WaveNet LSTM ConvNet Linear; do
+              if ! grep -qa "$arch" "$bin"; then
+                echo "::error::$(basename "$bin") is missing NAM architecture '$arch' — see keepNamArchitecturesLinked() in src/NamSlot.cpp"
+                fail=1
+              fi
+            done
+            echo "check-nam-linked: $bin OK"
+          done
+          exit $fail
+      - name: Package
+        shell: bash
+        run: |
+          mkdir -p dist
+          cp -R build/AmpCade_artefacts/Release/Standalone/AmpCade.exe dist/ || cp -R build/AmpCade_artefacts/Standalone/AmpCade.exe dist/
+          cp -R build/AmpCade_artefacts/Release/VST3/AmpCade.vst3 dist/ || cp -R build/AmpCade_artefacts/VST3/AmpCade.vst3 dist/
+          cp scripts/dist-README-windows.txt "dist/READ ME FIRST.txt"
+          cd dist && 7z a -r ../AmpCade-Windows.zip . > /dev/null
+      - uses: actions/upload-artifact@v4
+        with:
+          name: AmpCade-Windows
+          path: AmpCade-Windows.zip
+
+  # Anonymous visitors can't download Actions artifacts — a tag push (v*)
+  # publishes both zips as a proper GitHub Release anyone can grab.
+  release:
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: [macos, windows]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          merge-multiple: true
+      - uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            AmpCade-macOS.zip
+            AmpCade-Windows.zip
+          generate_release_notes: true
