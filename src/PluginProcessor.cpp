@@ -1869,26 +1869,38 @@ void AmpCadeProcessor::recallSceneBoard (const Scene& sc)
                 hidden.add (b);
     if (! sc.order.contains ("cmp") && ! hidden.contains ("cmp"))
         hidden.add ("cmp");
+    // Gear is shared across a preset's scenes: a capture any scene uses stays
+    // reachable from every scene — on the board where that scene puts it, in
+    // the rack everywhere else. Sourcing that from the LIVE rig alone left
+    // holes. Recall a scene that does not use the TS808 and it is parked in
+    // the rack, fine; but land on such a scene at launch and `meta` never had
+    // it, so there was nothing to merge and the pedal was simply absent from
+    // the preset until you happened to hit a scene that still carried it. The
+    // union of every scene's own snapshot is what a player means by "the gear
+    // in this preset", so that is what gets merged.
+    //
+    // "Definition wins" order is live rig first, then scenes by index, so the
+    // copy you are actually playing is the one that survives when two scenes
+    // put different captures in the same slot (only one can occupy p<n>).
+    std::map<juce::String, juce::ValueTree> shared;
+    const auto usable = [] (const juce::ValueTree& s)
+    {
+        // A pathless slot is still real: factory and shared presets ship gear
+        // identified only by TONE3000 id, and restoreSlotsFromState resolves
+        // those from the download cache.
+        return (bool) s.getProperty ("loaded", false)
+               && (s.getProperty ("filePath").toString().isNotEmpty()
+                   || ((int) s.getProperty ("toneId", 0) > 0
+                       && (int) s.getProperty ("modelId", 0) > 0));
+    };
+
     {
         const juce::ScopedLock l (metaLock);
         for (const auto& [name, sm] : meta)
         {
-            if (! name.startsWith ("p") || ! sm.loaded || sm.filePath.isEmpty())
+            if (! name.startsWith ("p") || ! sm.loaded)
                 continue;
-
-            bool sceneHasIt = false;
-            for (int i = merged.getNumChildren(); --i >= 0;)
-            {
-                auto s = merged.getChild (i);
-                if (s.getProperty ("id").toString() != name)
-                    continue;
-                sceneHasIt = (bool) s.getProperty ("loaded", false)
-                             && s.getProperty ("filePath").toString().isNotEmpty();
-                if (! sceneHasIt)
-                    merged.removeChild (i, nullptr); // replaced by the live pedal below
-                break;
-            }
-            if (sceneHasIt)
+            if (sm.filePath.isEmpty() && (sm.toneId <= 0 || sm.modelId <= 0))
                 continue;
 
             juce::ValueTree s ("SLOT");
@@ -1901,10 +1913,42 @@ void AmpCadeProcessor::recallSceneBoard (const Scene& sc)
             s.setProperty ("filePath", sm.filePath, nullptr);
             s.setProperty ("toneId", sm.toneId, nullptr);
             s.setProperty ("modelId", sm.modelId, nullptr);
-            merged.appendChild (s, nullptr);
-            if (! hidden.contains (name))
-                hidden.add (name);                   // present, but parked in the rack
+            shared.emplace (name, s);
         }
+    }
+
+    for (const auto& other : scenes)
+    {
+        if (! other.used || ! other.slots.isValid())
+            continue;
+        for (int i = 0; i < other.slots.getNumChildren(); ++i)
+        {
+            const auto s = other.slots.getChild (i);
+            const auto id = s.getProperty ("id").toString();
+            if (id.startsWith ("p") && usable (s))
+                shared.emplace (id, s.createCopy()); // first definition wins
+        }
+    }
+
+    for (const auto& [name, def] : shared)
+    {
+        bool sceneHasIt = false;
+        for (int i = merged.getNumChildren(); --i >= 0;)
+        {
+            auto s = merged.getChild (i);
+            if (s.getProperty ("id").toString() != name)
+                continue;
+            sceneHasIt = usable (s);
+            if (! sceneHasIt)
+                merged.removeChild (i, nullptr); // empty placeholder — replaced below
+            break;
+        }
+        if (sceneHasIt)
+            continue;                            // this scene puts it on the board
+
+        merged.appendChild (def.createCopy(), nullptr);
+        if (! hidden.contains (name))
+            hidden.add (name);                   // present, but parked in the rack
     }
 
     setHiddenSlots (hidden);
@@ -2181,10 +2225,35 @@ void AmpCadeProcessor::slotsFromTree (const juce::ValueTree& tree)
             mp->filePath = Library::unpackGearPath (s.getProperty ("filePath").toString());
             mp->toneId = (int) s.getProperty ("toneId", 0);
             mp->modelId = (int) s.getProperty ("modelId", 0);
-            if (! (bool) s.getProperty ("loaded", false))
+            mp->wanted = (bool) s.getProperty ("loaded", false);
+            if (! mp->wanted)
                 mp->filePath.clear();
         }
     }
+}
+
+juce::File AmpCadeProcessor::cachedGearFile (const juce::String& slot, const SlotMeta& sm)
+{
+    if (sm.toneId <= 0 || sm.modelId <= 0)
+        return {};
+
+    const bool isIr = (slot == "cab" || slot == "air");
+    const auto dir = (isIr ? Library::irsDir() : Library::modelsDir())
+                         .getChildFile ("tone_" + juce::String (sm.toneId));
+    if (! dir.isDirectory())
+        return {};
+
+    const auto ext = juce::String (isIr ? ".wav" : ".nam");
+    const auto exact = dir.getChildFile (Library::sanitizeFileName (sm.modelName)
+                                         + "_" + juce::String (sm.modelId) + ext);
+    if (exact.existsAsFile())
+        return exact;
+
+    // Renamed on TONE3000 since the download: the model id still pins the file.
+    juce::Array<juce::File> hits;
+    dir.findChildFiles (hits, juce::File::findFiles, false,
+                        "*_" + juce::String (sm.modelId) + ext);
+    return hits.isEmpty() ? juce::File() : hits.getReference (0);
 }
 
 void AmpCadeProcessor::restoreSlotsFromState()
@@ -2199,8 +2268,33 @@ void AmpCadeProcessor::restoreSlotsFromState()
             // TONE3000 identity can simply fetch itself back through the
             // player's own account. No connection = the missing badge and its
             // re-download button, as before.
-            const bool fileGone = sm.filePath.isEmpty() || ! juce::File (sm.filePath).existsAsFile();
-            const bool fetchable = sm.loaded && sm.toneId > 0 && sm.modelId > 0;
+            bool fileGone = sm.filePath.isEmpty() || ! juce::File (sm.filePath).existsAsFile();
+            // `wanted`, not `loaded`: slotsFromTree has just cleared `loaded`
+            // on every slot (it means "the engine holds it", which nothing can
+            // yet), so testing it here made this whole branch unreachable —
+            // pathless gear was never fetched and never resolved, it was
+            // simply dropped, which is why loading a factory preset without a
+            // live connection came back as the built-in amp and cab.
+            const bool fetchable = sm.wanted && sm.toneId > 0 && sm.modelId > 0;
+
+            // ...but look in the download cache BEFORE deciding it needs the
+            // network at all. Asking "is filePath empty? then fetch it" made a
+            // pathless preset depend on being logged in even when the exact
+            // file was already sitting in the cache under the very ids the
+            // preset was asking for — so an expired token read as "my amp and
+            // cab reverted to the built-ins", which looks like data loss and is
+            // not. This also means gear a friend's shared preset names loads
+            // instantly if you already own it, with no download at all.
+            if (fileGone && fetchable)
+            {
+                const auto cached = cachedGearFile (name, sm);
+                if (cached.existsAsFile())
+                {
+                    sm.filePath = cached.getFullPathName();
+                    sm.missing = false;
+                    fileGone = false;
+                }
+            }
 
             if (fileGone && fetchable && t3k.isConnected())
             {

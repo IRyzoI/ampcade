@@ -936,6 +936,46 @@ Process notes from the same round:
   ad-hoc signs; CI signs with the real Developer ID. The two disagree by design,
   and only one of them is what users download.
 
+## Pathless gear, and gear shared across a preset's scenes
+
+Reported as "my Clean preset's amp and cab suddenly became the stock tweed rig".
+Nothing was lost — both bugs are about *resolving* gear a preset only names.
+
+- **`fetchable` tested `sm.loaded`, which `slotsFromTree` has just set to false
+  on every slot** ("becomes true once the file actually loads"). So the whole
+  fetch-by-toneId branch in `restoreSlotsFromState` was unreachable: a slot with
+  no path fell to `filePath.isEmpty() && ! fetchable` and was simply CLEARED.
+  Every factory preset and every shared preset ships pathless by design, so
+  loading one has always dropped its gear — the rig survived only because the
+  standalone's session state stores real (relative) paths and is what restores
+  at launch. Reload the preset itself and the gear went. `SlotMeta::wanted` now
+  carries "the state asked for gear here", which is a different question from
+  "the engine holds gear here" and the only one answerable before the file
+  exists. **When a flag's comment says when it becomes true, check nobody is
+  reading it earlier than that.**
+- **The download cache is content-addressed and nothing was consulting it.**
+  `requestT3kLoad` parks gear at `<models|irs>/tone_<toneId>/<sanitised
+  name>_<modelId>.<nam|wav>` — the exact ids a pathless preset carries. But the
+  decision was "no path → needs the network", so an expired token turned a rig
+  whose files were already on disk into the built-in amp and cab. `cachedGearFile`
+  resolves it locally first (exact name, then `*_<modelId>.<ext>` in case the
+  tone was renamed upstream), which also means gear a friend's preset names
+  loads instantly if you already own it, with no download at all.
+- **Gear is shared across a preset's scenes, so the merge cannot read the live
+  rig alone.** `recallSceneBoard` already merged stray pedals into the rack, but
+  it sourced them from `meta` — i.e. only what is playing right now. Land
+  straight on a scene that does not use the TS808 (a preset load lands on scene
+  1, so this is the *common* case, not an edge one) and there was nothing to
+  merge: the pedal was on no board and in no rack, and the preset had silently
+  lost it. It now merges the union of every scene's own snapshot, live rig
+  first so the copy you are playing wins when two scenes put different captures
+  in the same slot. Note the test for this only bites if the pedal is absent
+  from scene 1 — write it the other way round and the live-rig path covers it
+  and the test passes against the unfixed code.
+- `usable()` in that merge also had to stop requiring a non-empty `filePath`:
+  with pathless presets every scene slot looked empty, so each scene's own gear
+  was being deleted and replaced by whatever was live.
+
 ## Params (APVTS id == WebView relay name)
 `in_gain` −24..+36; `out_gain` −24..+24; `gate` −101..−20 (−101 = off; the UI can drag it down to −84, below that is off); per pedal i∈1..`kNumPedals` (16): `p{i}_on`, `p{i}_drive` (±24), `p{i}_tone` 0..10 (5 = flat tilt), `p{i}_level` (±24); `amp_on`, `amp_gain`/`amp_vol` (±24), `amp_bass/mid/treble` 0..10; `cab_on`, `cab_mix` 0..1 (1 = fully wet, which is what a speaker cab wants). All linear ranges (JS normalizes scaled↔normalised without skew). Adding a param means three places: `createLayout`, `sliderNames()`/`toggleNames()` in PluginEditor.cpp (no relay = a knob that silently does nothing), and `PARAM_DEFS`/`TOGGLE_NAMES` in ui/index.html.
 

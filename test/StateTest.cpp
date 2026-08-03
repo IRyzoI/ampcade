@@ -434,6 +434,145 @@ int main()
         dir.deleteRecursively();
     }
 
+    // ---- Pathless gear resolves from the download cache, offline -----------
+    // Factory presets — and every preset anyone shares — identify gear by
+    // TONE3000 id and ship no file paths. Resolving one used to require a live
+    // connection, so an expired token made a rig whose files were already
+    // downloaded come back as the built-in amp and cab: it reads as data loss
+    // and is not. The cache is keyed by the very ids the preset is asking for.
+    {
+        auto dir = juce::File::getSpecialLocation (juce::File::tempDirectory)
+                       .getChildFile ("ampcade-cache-test");
+        dir.createDirectory();
+
+        const int toneId = 999001, modelId = 888002;
+        const juce::String modelName ("Test Cab IR");
+
+        // A real, readable IR sitting where a download would have left it.
+        auto cacheDir = Library::irsDir().getChildFile ("tone_" + juce::String (toneId));
+        cacheDir.createDirectory();
+        auto cached = cacheDir.getChildFile (Library::sanitizeFileName (modelName)
+                                             + "_" + juce::String (modelId) + ".wav");
+        {
+            juce::AudioBuffer<float> ir (1, 2048);
+            ir.clear();
+            for (int i = 0; i < 2048; ++i)   // short, front-loaded: a speaker, not a space
+                ir.setSample (0, i, std::exp (-(float) i / 120.0f) * (i == 0 ? 1.0f : 0.25f));
+
+            juce::WavAudioFormat wav;
+            cached.deleteFile();
+            std::unique_ptr<juce::FileOutputStream> os (cached.createOutputStream());
+            std::unique_ptr<juce::AudioFormatWriter> w (
+                wav.createWriterFor (os.get(), 48000.0, 1, 24, {}, 0));
+            check (w != nullptr, "the cached IR writer opens");
+            if (w != nullptr)
+            {
+                os.release();            // the writer owns the stream now
+                w->writeFromAudioSampleBuffer (ir, 0, ir.getNumSamples());
+            }
+        }
+        check (cached.existsAsFile(), "the cached IR exists on disk");
+
+        auto pathless = dir.getChildFile ("pathless.ampcade");
+        pathless.replaceWithText (
+            "<AMPCADE pedalOrder=\"\">\n"
+            "  <SLOTS>\n"
+            "    <SLOT id=\"cab\" loaded=\"1\" title=\"Cached Cab\" author=\"t\" gear=\"cab\""
+            " modelName=\"" + modelName + "\" filePath=\"\""
+            " toneId=\"" + juce::String (toneId) + "\""
+            " modelId=\"" + juce::String (modelId) + "\"/>\n"
+            "  </SLOTS>\n"
+            "</AMPCADE>\n");
+
+        auto pc = makeProcessor (standalone);
+        check (pc->loadPresetFrom (pathless), "the pathless preset loads");
+        pumpMessageLoop();
+
+        // Not connected to TONE3000 in this test — there is no token — so the
+        // only way the slot can end up resolved is straight off the disk.
+        juce::MemoryBlock after;
+        pc->getStateInformation (after);
+        auto xml = juce::AudioProcessor::getXmlFromBinary (after.getData(), (int) after.getSize());
+        check (xml != nullptr, "state round trips after the pathless preset");
+        if (xml != nullptr)
+        {
+            auto root = juce::ValueTree::fromXml (*xml);
+            auto slots = root.getChildWithName ("SLOTS");
+            auto cab = slots.getChildWithProperty ("id", "cab");
+            check (cab.isValid(), "the cab slot survived the pathless preset");
+            check (cab.getProperty ("filePath").toString().isNotEmpty(),
+                   "pathless gear already in the cache resolves with no connection");
+            check (! (bool) cab.getProperty ("missing", false),
+                   "cached gear is not reported missing");
+        }
+
+        cacheDir.deleteRecursively();
+        dir.deleteRecursively();
+    }
+
+    // ---- A preset's gear is shared by all of its scenes --------------------
+    // A capture one scene uses has to stay reachable from every scene: on the
+    // board where that scene puts it, in the RACK everywhere else. The merge
+    // used to read the live rig only, so landing straight on a scene that did
+    // not use the pedal left nothing to merge and the pedal was absent from
+    // the preset entirely — not on the board, not in the rack.
+    {
+        auto dir = juce::File::getSpecialLocation (juce::File::tempDirectory)
+                       .getChildFile ("ampcade-scene-share-test");
+        dir.createDirectory();
+
+        // Scene 1 does NOT use the pedal; scene 2 does. Order matters: a preset
+        // load lands on scene 1, so the pedal is never in the live rig at any
+        // point. Sourcing the merge from the live rig alone therefore has
+        // nothing to offer, which is precisely the hole — the pedal is on no
+        // board and in no rack, and the preset has silently lost it.
+        auto shared = dir.getChildFile ("shared.ampcade");
+        shared.replaceWithText (
+            "<AMPCADE pedalOrder=\"\">\n"
+            "  <SLOTS/>\n"
+            "  <SCENES active=\"-1\">\n"
+            // A scene with no VALUES is treated as unused (scenesFromTree), so
+            // both carry a real knob.
+            "    <SCENE idx=\"0\" name=\"Clean\" used=\"1\" hasBoard=\"1\" order=\"amp cab\" hidden=\"\">\n"
+            "      <VALUES amp_bass=\"4.0\"/>\n"
+            "      <SLOTS/>\n"
+            "    </SCENE>\n"
+            "    <SCENE idx=\"1\" name=\"Rhythm\" used=\"1\" hasBoard=\"1\" order=\"p1 amp cab\" hidden=\"\">\n"
+            "      <VALUES amp_bass=\"6.0\"/>\n"
+            "      <SLOTS><SLOT id=\"p1\" loaded=\"1\" title=\"TS808\" author=\"a\" gear=\"pedal\""
+            " modelName=\"TS808\" filePath=\"\" toneId=\"30104\" modelId=\"137699\"/></SLOTS>\n"
+            "    </SCENE>\n"
+            "  </SCENES>\n"
+            "</AMPCADE>\n");
+
+        auto ps = makeProcessor (standalone);
+        check (ps->loadPresetFrom (shared), "the shared-gear preset loads");
+        pumpMessageLoop();   // lands on scene 1 — the one WITHOUT the pedal
+
+        check (ps->getHiddenSlots().contains ("p1"),
+               "a pedal another scene uses sits in this scene's rack");
+
+        juce::MemoryBlock st;
+        ps->getStateInformation (st);
+        auto sx = juce::AudioProcessor::getXmlFromBinary (st.getData(), (int) st.getSize());
+        check (sx != nullptr, "state round trips after the scene recall");
+        if (sx != nullptr)
+        {
+            auto root = juce::ValueTree::fromXml (*sx);
+            auto p1 = root.getChildWithName ("SLOTS").getChildWithProperty ("id", "p1");
+            check (p1.isValid() && (int) p1.getProperty ("toneId", 0) == 30104,
+                   "the racked pedal keeps its TONE3000 identity, so it can be reloaded");
+        }
+
+        // And the scene that DOES use it still puts it on the board.
+        ps->sceneRecall (1);
+        pumpMessageLoop();
+        check (! ps->getHiddenSlots().contains ("p1"),
+               "the scene that uses the pedal still has it on the board");
+
+        dir.deleteRecursively();
+    }
+
     std::cout << (failures == 0 ? "STATE PASS\n" : "STATE FAIL\n");
     return failures == 0 ? 0 : 1;
 }

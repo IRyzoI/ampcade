@@ -61,7 +61,13 @@ public:
 
     struct SlotMeta
     {
-        bool loaded = false, missing = false;
+        // `loaded` means the ENGINE actually holds this gear — slotsFromTree
+        // clears it and the load path sets it. `wanted` is what the state we
+        // are restoring asked for, which is a different question and the only
+        // one worth asking before the file exists: a factory or shared preset
+        // names gear by TONE3000 id and ships no path, so "should this slot
+        // have something in it?" cannot be answered from `loaded`.
+        bool loaded = false, wanted = false, missing = false;
         juce::String title, author, gear, modelName, filePath;
         int toneId = 0, modelId = 0;
     };
@@ -231,6 +237,13 @@ private:
     void setParamPlain (const char* id, float plainValue);
     int blocksForSeconds (double seconds) const;
     void restoreSlotsFromState();
+    // Where requestT3kLoad would have parked this gear:
+    // <models|irs>/tone_<toneId>/<sanitised name>_<modelId>.<nam|wav>.
+    // A preset that ships no file paths — every factory preset, and every
+    // preset anyone shares — is resolvable offline whenever the player already
+    // downloaded that capture once. Returns a non-existent File when it is
+    // genuinely not on this machine.
+    static juce::File cachedGearFile (const juce::String& slot, const SlotMeta& sm);
     void updateLatency();
     void notifyState();
     void beginStateBatch();
